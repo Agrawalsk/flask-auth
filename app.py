@@ -4,6 +4,7 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, ValidationError
 import bcrypt
 from pymongo import MongoClient
+from bson import ObjectId  # Import ObjectId
 
 app = Flask(__name__)
 
@@ -58,7 +59,6 @@ def login():
 
         user = db.users.find_one({"email": email})
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password']):
-            session['user_id'] = user['_id']
             session['user_id'] = str(user['_id'])  # Convert ObjectId to string
             return redirect(url_for('dashboard'))
         else:
@@ -71,9 +71,8 @@ def login():
 def dashboard():
     if 'user_id' in session:
         user_id = session['user_id']
-        
 
-        user = db.users.find_one({"_id": user_id})
+        user = db.users.find_one({"_id": ObjectId(user_id)})  # Use ObjectId
 
         if user:
             return render_template('dashboard.html', user=user)
